@@ -1,0 +1,46 @@
+name: DooBMysqlCmd
+main: net.doobler.doobmysqlcmd.DooBMysqlCmd
+version: "0.0.1"
+commands:
+  dopen:
+    description: Opens virtual chest.
+    usage: |
+           Usage:
+           /<command> - Display virtual chest content to a player
+           /<command> [item] if item exist in chcest display only this item in chest
+    permission: dmysqlcmd.dopen
+    permission-message: You don't have <permission>
+permissions:
+  dmysqlcmd.*:
+    default: op
+    description: "Implies all DooBStat permissions."
+    children:
+      dstat.all: true
+  dmysqlcmd.all:
+    default: false
+    description: "Implies all DooBStat permissions."
+    children:
+      dstat.dstat.all: true
+  dmysqlcmd.dopen.*:
+    default: false
+    description: "[/dopen] command and subcommands."
+    children:
+      dmysqlcmd.dopen.all: true
+  dmysqlcmd.dopen.all:
+    default: false
+    description: "[/dopen] command and subcommands."
+    children:
+      dmysqlcmd.dopen: true
+      dmysqlcmd.dopen.filter: true
+      dmysqlcmd.dopen.clear: true
+  dmysqlcmd.dopen:
+    default: true
+    description: "[/dopen] base command."
+  dmysqlcmd.dopen.filter:
+    default: false
+    description: "[/dopen [item]] base command."
+  dmysqlcmd.dopen.clear:
+    default: false
+    description: "[/dopen clear] base command."
+
+    

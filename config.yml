@@ -1,0 +1,13 @@
+mysql:
+  host: ""
+  port: 3306
+  dbname: ""
+  user: ""
+  pass: ""
+  prefix: "dcmd_"
+clean:
+  days: 180
+checkVersion: true
+pluginStats: true
+debug: false
+dbversion: 0
