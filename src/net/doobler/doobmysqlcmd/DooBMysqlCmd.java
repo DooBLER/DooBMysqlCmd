@@ -1,6 +1,7 @@
 package net.doobler.doobmysqlcmd;
 
 
+import java.util.HashSet;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import net.doobler.doobmysqlcmd.DooBMysqlCmdDAO;
@@ -25,8 +26,9 @@ public final class DooBMysqlCmd extends JavaPlugin {
     
     // Kolejka komend do wykonania
     public LinkedBlockingQueue<DooBCmd> cmdQueue = new LinkedBlockingQueue<DooBCmd>();
-    public int lastCmdId = 0;
+    public int lastCmdId = 0; // TODO: to będzie chyba można przenieść do  CheckAndRunCmdsTask
     public boolean execFlag = false;
+    public HashSet<Integer> executedCmds = new HashSet<Integer>();
     
 	
 	public final PlayerListener playerListener = new PlayerListener(this);
@@ -79,6 +81,7 @@ public final class DooBMysqlCmd extends JavaPlugin {
 		
 		
 		// dodanie tasku sprawdzającego komendy
+		// zacznij 2 sekundy po starcie, powtarzaj co 5 sekund
 		new CheckAndRunCmdsTask(this).runTaskTimer(this, 40, 100);
 		
 		

@@ -7,9 +7,9 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Timestamp;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -145,36 +145,6 @@ public class DooBMysqlCmdDAO extends MySQL {
 				"`exec_date` = ? " +
 				"WHERE id = ?");
 		
-//		// aktualizuje dane gracza przy wychodzeniu z serwera
-//        this.addStatementSQL("updatePlayerQuit",
-//        		"UPDATE `" + this.getPrefixed("players") + "` " +
-//				"SET " +
-//				"online = 0, " +
-//				"last_logout = ?, " +
-//				"num_secs_loggedon = num_secs_loggedon + ? " +
-//				"WHERE id = ?");
-//        
-//        // aktualizuje statystyki gracza przy wychodzeniu z serwera
-//        this.addStatementSQL("updatePlayerStatQuit",
-//				"UPDATE `" + this.getPrefixed("morestats") + "` " +
-//				"SET " +
-//				"dist_foot = dist_foot + ?, " +
-//				"dist_fly = dist_fly + ?, " +
-//				"dist_swim = dist_swim + ?, " +
-//				"dist_pig = dist_pig + ?, " +
-//				"dist_cart = dist_cart + ?, " +
-//				"dist_boat = dist_boat + ?, " +
-//				"dist_horse = dist_horse + ?, " +
-//				"bed_enter = bed_enter + ?, " +
-//				"fish = fish + ?, " +
-//				"block_place = block_place + ?, " +
-//				"block_break = block_break + ?, " +
-//				"death_count = death_count + ?, " +
-//				"pvp_deaths = pvp_deaths + ?, " +
-//				"pvp_killer = ?, " +
-//				"pvp_kills = pvp_kills + ?, " +
-//				"pvp_victim = ? " +
-//				"WHERE id = ?");
 	}
 	
 	
@@ -205,228 +175,35 @@ public class DooBMysqlCmdDAO extends MySQL {
 	}
 	
 	
-	
-	
 	/**
-	 * Dodaje nowego gracza do bazy i zwraca id
-	 * 
-	 * @param name - player name
-	 * @param curtimestamp - timestamp
-	 * @param ip - player ip
-	 * @return database id
+	 * Aktualizuje stan w bazie danych na "wykonane" dla podanej listy komend
+	 * @param executedCmds
+	 * @throws SQLException
 	 */
-	public int addNewPlayer(String name, Timestamp curtimestamp, String ip) {
-		Connection conn = this.getConn();
+	public void updateExecutedCmds(HashSet<Integer> executedCmds) {
 		
-		// dodanie nowego gracza do bazy
-		// PreparedStatemnt nie jest zapisany, bo dodawanie nowych graczy
-		// występuje relatywnie dużo rzadziej 
+		Date curdate = new Date();
+		Timestamp curtimestamp = new Timestamp(curdate.getTime());
 		
-		// players table
-		String sql = "INSERT INTO " + plugin.db.getPrefixed("players") + " "  +
-			  "SET " +
-			  "player_name = ?, " +
-			  "player_ip = ?," +
-			  "online = 1, " +
-			  "firstever_login = ?, " +
-			  "last_login = ?, " +
-			  "num_logins = 1, " +
-			  "this_login = ?, " +
-			  "num_secs_loggedon = 1";
+		Iterator<Integer> executedIterator = executedCmds.iterator();
 		
-		PreparedStatement prest;
-		int newid = 0;
+		PreparedStatement prest = this.getPreparedStatement("updateCommandStatus");
 		try {
-			prest = conn.prepareStatement(sql,
-					Statement.RETURN_GENERATED_KEYS);
-			prest.setString(1, name);
-			prest.setString(2, ip);
-			prest.setTimestamp(3, curtimestamp);
-			prest.setTimestamp(4, curtimestamp);
-			prest.setTimestamp(5, curtimestamp);
-			prest.executeUpdate();
+			prest.clearBatch();
 			
-			ResultSet rs = prest.getGeneratedKeys();
-			
-			if (rs.next()){
-			    newid = rs.getInt(1);
+			while(executedIterator.hasNext()) {
+				prest.setTimestamp(1, curtimestamp);
+				prest.setInt(2, executedIterator.next());
+				prest.addBatch();
 			}
-			
-			prest.close();	
+			prest.executeBatch();
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
-		
-		// morestats table
-		sql = "INSERT INTO " + plugin.db.getPrefixed("morestats") + " "  +
-				"SET " +
-				"id = ?, " +
-				"dist_foot = 0, " +
-				"dist_fly = 0, " +
-				"dist_swim = 0, " +
-				"dist_pig = 0, " +
-				"dist_cart = 0, " +
-				"dist_boat = 0, " +
-				"dist_horse = 0, " +
-				"bed_enter = 0, " +
-				"fish = 0, " +
-				"block_place = 0, " +
-				"block_break = 0, " +
-				"death_count = 0, " +
-				"pvp_deaths = 0, " +
-				"pvp_killer = '', " +
-				"pvp_kills = 0, " +
-				"pvp_victim = ''";		
-		try {
-			prest = conn.prepareStatement(sql);
-			prest.setInt(1, newid);
-			prest.executeUpdate();
-			
-			prest.close();	
-		} catch (SQLException e) {
-			e.printStackTrace();
-		}
-		
-		return newid;
-	}
-	
-	
-	/**
-	 * Zwraca listę nazw wszystkich graczy
-	 * 
-	 * @return
-	 */
-	public List<String> getAllNames() {
-		List<String> player_names = new ArrayList<String>();
-		
-		Connection conn = this.getConn();
-		
-		String sql = "SELECT `player_name` FROM " + this.getPrefixed("players") + " " +
-				"WHERE 1";
-		
-		try {
-			Statement st = conn.createStatement();
-			ResultSet players_set = st.executeQuery(sql);
-			
-			while(players_set.next()) {
-				player_names.add(players_set.getString("player_name"));
-			}
-	
-			st.close();
-		} catch (SQLException e) {
-			e.printStackTrace();
-		}
-		
-		return player_names;
+
 	}
 	
 
-	
-	
-	/**
-	 * Funkcja usuwa danego gracza z bazy DooBStat
-	 * 
-	 * @param player_name
-	 */
-	public boolean removePlayer(String player_name) {
-		Connection conn = this.getConn();
-		
-		String sql = "DELETE t1, t2 " +
-				"FROM " + this.getPrefixed("players") + " AS t1 " +
-				"INNER JOIN " + this.getPrefixed("morestats") +" AS t2 " +
-				"WHERE t1.player_name=? " +
-				"AND t1.id=t2.id";
-		
-		int delrows = 0;
-		try {
-			PreparedStatement prest = conn.prepareStatement(sql);
-			prest.setString(1, player_name);
-			
-			this.plugin.getLogger().info(prest.toString());
-			
-			delrows = prest.executeUpdate();
-			
-			
-			prest.close();
-		} catch (SQLException e) {
-			e.printStackTrace();
-		}
-		
-		if(delrows < 1) {
-			return false;
-		}
-		
-		return true;
-	}
-	
-	
-	/**
-	 * Zapisuje zebrane dane gracza
-	 */
-//	public void savePlayerData(DooBStatPlayerData playerData) {
-//		
-//		Map<String, DooBStatPlayerData> tmp = new HashMap<String, DooBStatPlayerData>();
-//		tmp.put(playerData.getPlayerName().toLowerCase(), playerData);
-//		
-//		this.savePlayersData(tmp);
-//		
-//	}
-	
-//	public void savePlayersData(Map<String, DooBStatPlayerData> data_map)
-//	{
-//		Date curdate = new Date();
-//		Timestamp curtimestamp = new Timestamp(curdate.getTime());
-//		
-//		PreparedStatement prest = this.getPreparedStatement("updatePlayerQuit");
-//		PreparedStatement prest2 = this.getPreparedStatement("updatePlayerStatQuit");
-//		
-//		Iterator<Map.Entry<String, DooBStatPlayerData>> wpisy = data_map.entrySet().iterator();
-//		while (wpisy.hasNext()) {
-//		    Map.Entry<String, DooBStatPlayerData> wpis = wpisy.next();
-//		    try {
-//		    	DooBStatPlayerData playerData = wpis.getValue();
-//		    	
-//				prest.setTimestamp(1, curtimestamp);
-//				prest.setInt(2, (int)((curdate.getTime() - playerData.getLoginDate().getTime())/1000));
-//				prest.setInt(3, playerData.getPlayerId());
-//				prest.addBatch();
-//				
-//				prest2.setInt(1, (int)playerData.getDist(DooBStatPlayerData.FOOT));
-//				prest2.setInt(2, (int)playerData.getDist(DooBStatPlayerData.FLY));
-//				prest2.setInt(3, (int)playerData.getDist(DooBStatPlayerData.SWIM));
-//				prest2.setInt(4, (int)playerData.getDist(DooBStatPlayerData.PIG));
-//				prest2.setInt(5, (int)playerData.getDist(DooBStatPlayerData.CART));
-//				prest2.setInt(6, (int)playerData.getDist(DooBStatPlayerData.BOAT));
-//				prest2.setInt(7, (int)playerData.getDist(DooBStatPlayerData.HORSE));
-//				prest2.setInt(8, playerData.getBedEnter());
-//				prest2.setInt(9, playerData.getFish());
-//				prest2.setInt(10, playerData.getBlockPlace());
-//				prest2.setInt(11, playerData.getBlockBreak());
-//				prest2.setInt(12, playerData.getDeath());
-//				prest2.setInt(13, playerData.getPvpDeath());
-//				prest2.setString(14, playerData.getPvpKiller());
-//				prest2.setInt(15, playerData.getPvpKill());
-//				prest2.setString(16, playerData.getPvpVictim());
-//				prest2.setInt(17, playerData.getPlayerId());
-//				prest2.addBatch();
-//			} catch (SQLException e) {
-//				e.printStackTrace();
-//			}
-//		    wpisy.remove();
-//		}
-//		
-//		try {
-//			prest.executeBatch();
-//			prest.clearBatch();
-//			prest2.executeBatch();
-//			prest2.clearBatch();
-//		} catch (SQLException e) {
-//			e.printStackTrace();
-//		}
-//		
-//	}
-	
-	
 	/**
 	 * Tworzy strukturę tabel pluginu
 	 */
@@ -457,6 +234,9 @@ public class DooBMysqlCmdDAO extends MySQL {
 		
 
 	}
+
+
+	
 	
 
 	

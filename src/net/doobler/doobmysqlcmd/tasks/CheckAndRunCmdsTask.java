@@ -1,12 +1,13 @@
 package net.doobler.doobmysqlcmd.tasks;
 
-import java.util.Iterator;
+
 import java.util.List;
 
 import net.doobler.doobmysqlcmd.DooBCmd;
 import net.doobler.doobmysqlcmd.DooBMysqlCmd;
 
 import org.bukkit.scheduler.BukkitRunnable;
+
 
 public class CheckAndRunCmdsTask extends BukkitRunnable {
 	
