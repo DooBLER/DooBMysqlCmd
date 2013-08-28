@@ -81,8 +81,8 @@ public final class DooBMysqlCmd extends JavaPlugin {
 		
 		
 		// dodanie tasku sprawdzającego komendy
-		// zacznij 2 sekundy po starcie, powtarzaj co 5 sekund
-		new CheckAndRunCmdsTask(this).runTaskTimer(this, 40, 100);
+		// zacznij 5 sekund po starcie, powtarzaj co 10 sekund
+		new CheckAndRunCmdsTask(this).runTaskTimer(this, 100, 200);
 		
 		
 		

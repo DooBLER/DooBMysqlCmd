@@ -27,6 +27,7 @@ public class InventoryListener implements Listener {
 	}
 	
 	
+	@SuppressWarnings("deprecation")
 	@EventHandler(priority = EventPriority.HIGHEST)
 	public void onInventoryClick(InventoryClickEvent event) {
 		
@@ -59,6 +60,7 @@ public class InventoryListener implements Listener {
 
 	}
 	
+	@SuppressWarnings("deprecation")
 	@EventHandler(priority = EventPriority.HIGHEST)
 	public void onInventoryDrag(InventoryDragEvent event) {
 		

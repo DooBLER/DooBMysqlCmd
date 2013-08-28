@@ -11,10 +11,17 @@ import org.bukkit.scheduler.BukkitRunnable;
 public class ExecuteCmdTask extends BukkitRunnable {
 
 	private static DooBMysqlCmd plugin;
+	private boolean fromExecTask = false;
 	
 	
 	public ExecuteCmdTask(DooBMysqlCmd plugin) {
 		ExecuteCmdTask.plugin = plugin;
+		this.fromExecTask = false;
+	}
+	
+	public ExecuteCmdTask(DooBMysqlCmd plugin, boolean fromExecTask) {
+		ExecuteCmdTask.plugin = plugin;
+		this.fromExecTask = fromExecTask;
 	}
 	
 	
@@ -23,7 +30,7 @@ public class ExecuteCmdTask extends BukkitRunnable {
 		// ustawienie flagi informującej, że wykonywanie komend jest w toku
 		if(!ExecuteCmdTask.plugin.execFlag) {
 			ExecuteCmdTask.plugin.execFlag = true;
-		} else {
+		} else if(this.fromExecTask == false) {
 			return;
 		}
 		
@@ -53,7 +60,7 @@ public class ExecuteCmdTask extends BukkitRunnable {
 				ExecuteCmdTask.plugin.db.updateExecutedCmds(ExecuteCmdTask.plugin.executedCmds);
 			}
 			
-			new ExecuteCmdTask(ExecuteCmdTask.plugin).runTaskLater(ExecuteCmdTask.plugin, 10);
+			new ExecuteCmdTask(ExecuteCmdTask.plugin, true).runTaskLater(ExecuteCmdTask.plugin, 10);
 			
 		} else {
 			// Jeśli nie ma co wykonać to resetuje flagę.
